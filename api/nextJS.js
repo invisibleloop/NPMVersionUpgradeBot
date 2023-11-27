@@ -32,6 +32,7 @@ async function handler(req, res) {
 
     const lastVersionKey = 'LAST_VERSION';
     let lastVersion = await kv.get(lastVersionKey);
+    console.log('### lastVersion: ', lastVersion);
 
     if (latestVersion !== lastVersion) {
       // await sendMessageToSlack(latestVersion);
