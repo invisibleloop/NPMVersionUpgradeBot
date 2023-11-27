@@ -39,7 +39,7 @@ async function handler(req, res) {
       await kv.set(lastVersionKey, latestVersion);
       res.send(`New version of Next.js found and notified: ${latestVersion}`);
     } else {
-      res.send(`No new version. Current latest version is ${latestVersion}`);
+      res.send(`No new version... Current latest version is ${latestVersion}`);
     }
   } catch (error) {
     console.error('Error:', error.message);
