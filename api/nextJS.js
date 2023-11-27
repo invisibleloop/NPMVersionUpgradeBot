@@ -1,11 +1,10 @@
 const axios = require('axios');
 
 module.exports = async (req, res) => {
-  require('dotenv').config();
   const PACKAGE_NAME = 'next';
   const SLACK_TOKEN = process.env.SLACK_TOKEN;
   const SLACK_CHANNEL = process.env.SLACK_CHANNEL;
-  const lastVersion = process.env.LAST_VERSION || '0.0.0';
+  const KV_STORAGE_URL = process.env.KV_STORAGE_URL;
 
   const sendMessageToSlack = async (latestVersion) => {
     const npmLink = `https://www.npmjs.com/package/next/v/${latestVersion}`;
@@ -27,14 +26,32 @@ module.exports = async (req, res) => {
     }
   };
 
+  const getLastVersion = async () => {
+    try {
+      const response = await axios.get(`${KV_STORAGE_URL}/last_version`);
+      return response.data.version;
+    } catch (error) {
+      console.error('Error getting last version:', error.message);
+      return '0.0.0';  // Default version if unable to fetch
+    }
+  };
+
+  const updateLastVersion = async (version) => {
+    try {
+      await axios.post(`${KV_STORAGE_URL}/last_version`, { version });
+    } catch (error) {
+      console.error('Error updating last version:', error.message);
+    }
+  };
+
   try {
-    const response = await axios.get(`https://registry.npmjs.org/${PACKAGE_NAME}/latest`);
-    const latestVersion = response.data.version;
+    const latestVersion = await axios.get(`https://registry.npmjs.org/${PACKAGE_NAME}/latest`)
+                                       .then(res => res.data.version);
+    const lastVersion = await getLastVersion();
 
     if (latestVersion !== lastVersion) {
       await sendMessageToSlack(latestVersion);
-      // Here you would ideally update the LAST_VERSION environment variable
-      // or store this information in a database
+      await updateLastVersion(latestVersion);
       res.send(`New version of Next.js found and notified: ${latestVersion}`);
     } else {
       res.send(`No new version. Current latest version is ${latestVersion}`);
