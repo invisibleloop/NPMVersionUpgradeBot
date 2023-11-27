@@ -1,10 +1,10 @@
-const axios = require('axios');
+import axios from 'axios';
+import { kv } from '@vercel/kv';
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   const PACKAGE_NAME = 'next';
   const SLACK_TOKEN = process.env.SLACK_TOKEN;
   const SLACK_CHANNEL = process.env.SLACK_CHANNEL;
-  const KV_STORAGE_URL = process.env.KV_STORAGE_URL;
 
   const sendMessageToSlack = async (latestVersion) => {
     const npmLink = `https://www.npmjs.com/package/next/v/${latestVersion}`;
@@ -26,38 +26,22 @@ module.exports = async (req, res) => {
     }
   };
 
-  const getLastVersion = async () => {
-    try {
-      const response = await axios.get(`${KV_STORAGE_URL}/last_version`);
-      return response.data.version;
-    } catch (error) {
-      console.error('Error getting last version:', error.message);
-      return '0.0.0';  // Default version if unable to fetch
-    }
-  };
-
-  const updateLastVersion = async (version) => {
-    try {
-      await axios.post(`${KV_STORAGE_URL}/last_version`, { version });
-    } catch (error) {
-      console.error('Error updating last version:', error.message);
-    }
-  };
-
   try {
-    const latestVersion = await axios.get(`https://registry.npmjs.org/${PACKAGE_NAME}/latest`)
-                                       .then(res => res.data.version);
-    const lastVersion = await getLastVersion();
+    const latestVersionResponse = await axios.get(`https://registry.npmjs.org/${PACKAGE_NAME}/latest`);
+    const latestVersion = latestVersionResponse.data.version;
+
+    const lastVersionKey = 'LAST_VERSION';
+    let lastVersion = await kv.get(lastVersionKey);
 
     if (latestVersion !== lastVersion) {
       await sendMessageToSlack(latestVersion);
-      await updateLastVersion(latestVersion);
+      await kv.set(lastVersionKey, latestVersion);
       res.send(`New version of Next.js found and notified: ${latestVersion}`);
     } else {
       res.send(`No new version. Current latest version is ${latestVersion}`);
     }
   } catch (error) {
-    console.error('Error checking Next.js version:', error.message);
-    res.status(500).send('Error checking Next.js version');
+    console.error('Error:', error.message);
+    res.status(500).send('An error occurred');
   }
-};
+}
