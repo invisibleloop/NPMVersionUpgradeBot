@@ -1,7 +1,7 @@
-import axios from 'axios';
-import { kv } from '@vercel/kv';
+const axios = require('axios');
+const { kv } = require('@vercel/kv');
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   const PACKAGE_NAME = 'next';
   const SLACK_TOKEN = process.env.SLACK_TOKEN;
   const SLACK_CHANNEL = process.env.SLACK_CHANNEL;
@@ -45,3 +45,5 @@ export default async function handler(req, res) {
     res.status(500).send('An error occurred');
   }
 }
+
+module.exports = handler;
