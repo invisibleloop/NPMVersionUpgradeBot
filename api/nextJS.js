@@ -32,14 +32,13 @@ async function handler(req, res) {
 
     const lastVersionKey = 'LAST_VERSION';
     let lastVersion = await kv.get(lastVersionKey);
-    console.log('### lastVersion: ', lastVersion);
 
     if (latestVersion !== lastVersion) {
       // await sendMessageToSlack(latestVersion);
       await kv.set(lastVersionKey, latestVersion);
       res.send(`New version of Next.js found and notified: ${latestVersion}`);
     } else {
-      res.send(`No new version... Current latest version is ${latestVersion}`);
+      res.send(`No new version...(${lastVersion}) Current latest version is ${latestVersion}`);
     }
   } catch (error) {
     console.error('Error:', error.message);
