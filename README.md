@@ -47,7 +47,7 @@ vercel dev
 
 ## Usage
 
-Once deployed, the serverless function will be triggered via an external scheduler (like EasyCron) to check for new Next.js versions daily.
+Once deployed, the serverless function will be triggered via Vercel cron to check for new Next.js versions daily.
 
 ## Contributing
 
