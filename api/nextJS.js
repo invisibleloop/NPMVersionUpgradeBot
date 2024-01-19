@@ -49,7 +49,7 @@ async function handler(req, res) {
       if (latestVersion !== lastVersion) {
         await sendMessageToSlack(package.name, package.displayName, latestVersion, package.changelogUrl(latestVersion));
         await kv.set(lastVersionKey, latestVersion);
-        res.write(`New version of ${package.displayName} found and notified: ${latestVersion}\n`);
+        res.write(`CHN: ${SLACK_CHANNEL} / TKN: ${SLACK_TOKEN} / New version of ${package.displayName} found and notified: ${latestVersion}\n`);
       } else {
         res.write(`No new version for ${package.displayName}. Current latest version is ${latestVersion}\n`);
       }
