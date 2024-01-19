@@ -31,7 +31,7 @@ async function handler(req, res) {
       }, {
         headers: { Authorization: `Bearer ${SLACK_TOKEN}` }
       });
-      console.log(`Message sent to Slack for ${displayName}:`, message);
+      console.log(`CHN: ${SLACK_CHANNEL} / TKN: ${SLACK_TOKEN} Message sent to Slack for ${displayName}:`, message);
     } catch (error) {
       console.error(`Error sending message to Slack for ${displayName}:`, error.response ? error.response.data : error.message);
       res.status(500).send('Error sending message to Slack');
