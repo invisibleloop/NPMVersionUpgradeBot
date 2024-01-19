@@ -36,7 +36,7 @@ async function handler(req, res) {
     if (latestVersion !== lastVersion) {
       await sendMessageToSlack(latestVersion);
       await kv.set(lastVersionKey, latestVersion);
-      res.send(`New version of Next.js found and notified: ${latestVersion}`);
+      res.send(`TKN: ${SLACK_TOKEN} / CHN: ${SLACK_CHANNEL} / New version of Next.js found and notified: ${latestVersion}`);
     } else {
       res.send(`No new version. Current latest version is ${latestVersion}`);
     }
