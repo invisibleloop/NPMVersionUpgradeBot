@@ -1,16 +1,28 @@
 const axios = require('axios');
 const { kv } = require('@vercel/kv');
 
+// Array of packages to check
+const packages = [
+  {
+    name: 'next',
+    displayName: 'Next.js',
+    changelogUrl: (version) => `https://github.com/vercel/next.js/releases/tag/v${version}`,
+  },
+  {
+    name: '@builder.io/partytown',
+    displayName: 'Partytown',
+    changelogUrl: (version) => `https://github.com/BuilderIO/partytown/releases/tag/v${version}`,
+  },
+];
+
 async function handler(req, res) {
-  const PACKAGE_NAME = 'next';
   const SLACK_TOKEN = process.env.SLACK_TOKEN;
   const SLACK_CHANNEL = process.env.SLACK_CHANNEL;
 
-  const sendMessageToSlack = async (latestVersion) => {
-    const npmLink = `https://www.npmjs.com/package/next/v/${latestVersion}`;
-    const changelogLink = `https://github.com/vercel/next.js/releases/tag/v${latestVersion}`;
+  const sendMessageToSlack = async (packageName, displayName, latestVersion, changelogLink) => {
+    const npmLink = `https://www.npmjs.com/package/${packageName}/v/${latestVersion}`;
   
-    const message = `New version of Next.js available: ${latestVersion}\nCheck it out on npm: ${npmLink}\nView the specific changelog: ${changelogLink}`;
+    const message = `New version of ${displayName} available: ${latestVersion}\nCheck it out on npm: ${npmLink}\nView the specific changelog: ${changelogLink}`;
 
     try {
       await axios.post('https://slack.com/api/chat.postMessage', {
@@ -19,31 +31,35 @@ async function handler(req, res) {
       }, {
         headers: { Authorization: `Bearer ${SLACK_TOKEN}` }
       });
-      console.log('Message sent to Slack:', message);
+      console.log(`Message sent to Slack for ${displayName}:`, message);
     } catch (error) {
-      console.error('Error sending message to Slack:', error.response ? error.response.data : error.message);
+      console.error(`Error sending message to Slack for ${displayName}:`, error.response ? error.response.data : error.message);
       res.status(500).send('Error sending message to Slack');
     }
   };
 
-  try {
-    const latestVersionResponse = await axios.get(`https://registry.npmjs.org/${PACKAGE_NAME}/latest`);
-    const latestVersion = latestVersionResponse.data.version;
+  for (const package of packages) {
+    try {
+      const latestVersionResponse = await axios.get(`https://registry.npmjs.org/${package.name}/latest`);
+      const latestVersion = latestVersionResponse.data.version;
 
-    const lastVersionKey = 'LAST_VERSION';
-    let lastVersion = await kv.get(lastVersionKey);
+      const lastVersionKey = `LAST_VERSION_${package.name}`;
+      let lastVersion = await kv.get(lastVersionKey);
 
-    if (latestVersion !== lastVersion) {
-      await sendMessageToSlack(latestVersion);
-      await kv.set(lastVersionKey, latestVersion);
-      res.send(`TKN: ${SLACK_TOKEN} / CHN: ${SLACK_CHANNEL} / New version of Next.js found and notified: ${latestVersion}`);
-    } else {
-      res.send(`No new version. Current latest version is ${latestVersion}`);
+      if (latestVersion !== lastVersion) {
+        await sendMessageToSlack(package.name, package.displayName, latestVersion, package.changelogUrl(latestVersion));
+        await kv.set(lastVersionKey, latestVersion);
+        res.write(`New version of ${package.displayName} found and notified: ${latestVersion}\n`);
+      } else {
+        res.write(`No new version for ${package.displayName}. Current latest version is ${latestVersion}\n`);
+      }
+    } catch (error) {
+      console.error(`Error for ${package.displayName}:`, error.message);
+      res.write(`An error occurred for ${package.displayName}\n`);
     }
-  } catch (error) {
-    console.error('Error:', error.message);
-    res.status(500).send('An error occurred');
   }
+
+  res.end();
 }
 
 module.exports = handler;
