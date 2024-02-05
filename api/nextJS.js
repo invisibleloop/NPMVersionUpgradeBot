@@ -13,6 +13,11 @@ const packages = [
     displayName: 'Partytown',
     changelogUrl: (version) => `https://github.com/BuilderIO/partytown/releases/tag/v${version}`,
   },
+  {
+    name: 'million',
+    displayName: 'Million.js',
+    changelogUrl: (version) => `https://github.com/aidenybai/million/releases/tag/v${version}`,
+  },
 ];
 
 async function handler(req, res) {
